@@ -17,7 +17,7 @@ def get_chat_response(messages: list[dict[str, str]])->Tuple[str, bool]:
             presence_penalty=shared.plugin_config.chat_presence_penalty,
             timeout=shared.plugin_config.api_timeout,
         )
-        res = response['choices'][0]['text'].strip() # type: ignore
+        res = response['choices'][0]['message']['content'].strip() # type: ignore
         return res, True
     except Exception as e:
         return f"请求 OpenAi Api 时发生错误: {repr(e)}", False
