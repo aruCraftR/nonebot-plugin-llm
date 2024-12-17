@@ -86,6 +86,8 @@ class PluginConfig:
         if self.config_path.is_file():
             with open(self.config_path, mode='r', encoding='utf-8') as f:
                 self.yaml = yaml.load(f, Loader=yaml.FullLoader)
+        else:
+            self.yaml = {}
         self.apply_yaml()
         with open(self.config_path, mode='w', encoding='utf-8') as f:
             yaml.dump(self.get_dict(), f, allow_unicode=True)
