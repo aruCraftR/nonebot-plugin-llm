@@ -30,6 +30,8 @@ last_msg_time = 0
 async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
     global last_msg_time
     sender_name = await get_user_name(event=event, bot=bot, user_id=event.user_id) or '未知'
+    if shared.plugin_config.debug:
+        shared.logger.info(f'正在处理来自 {sender_name} 的消息')
     if isinstance(event, GroupMessageEvent):
         chat_key = 'group_' + event.get_session_id().split("_")[1]
         is_group = True
@@ -57,6 +59,9 @@ async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
         if is_group:
             record_other_history(chat_key, chat_text, sender_name)
         return
+
+    if shared.plugin_config.debug:
+        shared.logger.info(f'正在准备为 {sender_name} 生成消息')
 
     history = record_chat_history(chat_key, chat_text, sender_name)
 
