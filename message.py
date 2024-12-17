@@ -58,6 +58,8 @@ async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
         ):
         if is_group:
             record_other_history(chat_key, chat_text, sender_name)
+        if shared.plugin_config.debug:
+            shared.logger.info(f'{sender_name} 的消息不满足生成条件, 已跳过')
         return
 
     if shared.plugin_config.debug:
