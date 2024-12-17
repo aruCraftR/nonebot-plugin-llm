@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from os import makedirs
 from pathlib import Path
 from typing import Any, Callable
@@ -94,7 +93,7 @@ class PluginConfig:
         openai.api_base = self.openai_api_v1
 
     def get_dict(self):
-        return OrderedDict((k, getattr(self, k)) for k in self.config_checkers.keys())
+        return {k: getattr(self, k) for k in self.config_checkers.keys()}
 
     def apply_yaml(self):
         for key, (types, condition, default) in self.config_checkers.items():
