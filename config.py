@@ -91,6 +91,7 @@ class PluginConfig:
         with open(self.config_path, mode='w', encoding='utf-8') as f:
             yaml.dump(self.get_dict(), f, allow_unicode=True)
         openai.api_base = self.openai_api_v1
+        openai.api_key = 'none'
 
     def get_dict(self):
         return {k: getattr(self, k) for k in self.config_checkers.keys()}
