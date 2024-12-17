@@ -45,7 +45,7 @@ async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
 
     chat_text, wake_up = await uniform_chat_text(event=event, bot=bot)
 
-    if not (
+    if not ((
             shared.plugin_config.reply_on_name_mention
             and
             shared.plugin_config.bot_name in chat_text.lower()
@@ -53,7 +53,7 @@ async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
             shared.plugin_config.reply_on_at
             and
             (wake_up or event.is_tome())
-        ):
+        )):
         if is_group:
             record_other_history(chat_key, chat_text, sender_name)
         if shared.plugin_config.debug:
