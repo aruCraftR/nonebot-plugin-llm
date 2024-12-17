@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from os import makedirs
 from pathlib import Path
 from typing import Any, Callable
 import yaml
@@ -77,6 +78,7 @@ class PluginConfig:
     debug: bool
 
     def __init__(self):
+        makedirs('data/llm', exist_ok=True)
         self.yaml: dict = None # type: ignore
         self.load_yaml()
 
