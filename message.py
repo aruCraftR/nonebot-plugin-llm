@@ -30,8 +30,6 @@ last_msg_time = 0
 async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
     global last_msg_time
     sender_name = await get_user_name(event=event, bot=bot, user_id=event.user_id) or '未知'
-    if shared.plugin_config.debug:
-        shared.logger.info(f'正在处理来自 {sender_name} 的消息')
     if isinstance(event, GroupMessageEvent):
         chat_key = 'group_' + event.get_session_id().split("_")[1]
         is_group = True
@@ -59,7 +57,13 @@ async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
         if is_group:
             record_other_history(chat_key, chat_text, sender_name)
         if shared.plugin_config.debug:
-            shared.logger.info(f'{sender_name} 的消息不满足生成条件, 已跳过')
+            shared.logger.info(f'{sender_name} 的消息 {chat_text} 不满足生成条件, 已跳过')
+            shared.logger.info(
+                f'reply_on_name_mention: {shared.plugin_config.reply_on_name_mention}\n'
+                f'reply_on_at: {shared.plugin_config.reply_on_at}\n'
+                f'mention: {shared.plugin_config.bot_name in chat_text.lower()}\n'
+                f'wake_up or at: {wake_up or event.is_tome()}'
+            )
         return
 
     if shared.plugin_config.debug:
