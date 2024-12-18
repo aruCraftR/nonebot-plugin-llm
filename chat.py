@@ -70,10 +70,10 @@ class ChatInstance:
 class ChatHistory:
     def __init__(self, instance: ChatInstance):
         self.instance = instance
-        self.other_history: deque[tuple[float, str, dict, int]] = deque()
+        self.other_history: deque[tuple[float, dict, int]] = deque()
         self.other_history_token_count = 0
         self.last_other_text = None
-        self.chat_history: deque[tuple[float, str, dict, int]] = deque()
+        self.chat_history: deque[tuple[float, dict, int]] = deque()
         self.chat_history_token_count = 0
         self.last_chat_text = None
 
@@ -81,19 +81,7 @@ class ChatHistory:
         sys_prompt = self.instance.config.system_prompt
         messages = [{"role": "system", "content": sys_prompt}] if sys_prompt else []
         histories = sorted(self.other_history + self.chat_history, key=lambda x: x[0])
-        if self.instance.config.provide_username or self.instance.config.provide_local_time:
-            for i in histories:
-                msg = i[2]
-                if msg['role'] == 'user':
-                    extra = ''
-                    if self.instance.config.provide_local_time:
-                        extra = f'[时间: {i[1]}] '
-                    if self.instance.config.provide_username:
-                        extra = f'{extra}{msg['name']}说 '
-                    msg['content'] = f'{extra}{msg['content']}'
-                messages.append(msg)
-        else:
-            messages.extend(i[2] for i in histories)
+        messages.extend(i[1] for i in histories)
         return messages
 
     def add_other_history(self, text: str, sender: str, auto_remove=True):
@@ -101,9 +89,10 @@ class ChatHistory:
             token_count = self.other_history.pop()[-1]
         else:
             self.last_other_text = text
+            text = self.add_extra_info(text)
             token_count = self.count_token(text)
             self.other_history_token_count += token_count
-        self.other_history.append((time(), asctime(), self.gen_text_json(text, sender), token_count))
+        self.other_history.append((time(), self.gen_text_json(text, sender), token_count))
         if not auto_remove:
             return
         while len(self.other_history) > 0 and self.other_history_token_count > self.instance.config.record_other_context_token_limit:
@@ -114,13 +103,21 @@ class ChatHistory:
             token_count = self.chat_history.pop()[-1]
         else:
             self.last_chat_text = text
+            text = self.add_extra_info(text)
             token_count = self.count_token(text)
             self.chat_history_token_count += token_count
-        self.chat_history.append((time(), asctime(), self.gen_text_json(text, sender), token_count))
+        self.chat_history.append((time(), self.gen_text_json(text, sender), token_count))
         if not auto_remove:
             return
         while len(self.chat_history) > 0 and self.chat_history_token_count > self.instance.config.record_chat_context_token_limit:
             self.chat_history_token_count -= self.chat_history.popleft()[-1]
+
+    def add_extra_info(self, text: str, sender: Optional[str] = None):
+        if sender is not None and self.instance.config.provide_username:
+            text = f'{sender}说 {text}'
+        if self.instance.config.provide_local_time:
+            text = f'[时间: {asctime()}] {text}'
+        return text
 
     @staticmethod
     def gen_text_json(text: str, sender: Optional[str] = None):
