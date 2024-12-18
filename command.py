@@ -88,7 +88,7 @@ async def info_history(event: MessageEvent, bot: Bot):
     chat_instance = await get_chat_instance(cmd_change_bot, event, bot)
     await cmd_info_history.finish(
         f'对话条数: {len(chat_instance.history.chat_history)}\n'
-        f'对话Token数: {chat_instance.history.chat_history_token_count}\n'
+        f'对话Token数: {chat_instance.history.chat_history_token_count} / {chat_instance.config.record_chat_context_token_limit}\n'
         f'上下文条数: {len(chat_instance.history.other_history)}\n'
-        f'上下文Token数: {chat_instance.history.other_history_token_count}'
+        f'上下文Token数: {chat_instance.history.other_history_token_count} / {chat_instance.config.record_other_context_token_limit}'
     )
