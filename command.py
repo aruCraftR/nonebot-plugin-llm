@@ -3,8 +3,7 @@ from nonebot import on_command
 from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.permission import SUPERUSER
 
-from utils import get_chat_type
-
+from .utils import get_chat_type
 from . import history
 from . import shared
 
