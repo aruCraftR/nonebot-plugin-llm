@@ -1,10 +1,10 @@
 from collections.abc import Iterable
 from pathlib import Path
+import os
 from typing import Any, Callable, Optional
 import yaml
 
 from . import shared
-
 
 DEFAULT = 'default'
 
@@ -40,11 +40,11 @@ class LLMConfig:
             return f'{self.attr_prefix}{attr}'
 
     def load_yaml(self) -> None:
+        os.makedirs(os.path.split(self.config_path)[0], exist_ok=True)
         if self.config_path.is_file():
             with open(self.config_path, mode='r', encoding='utf-8') as f:
                 self.yaml = yaml.load(f, Loader=yaml.FullLoader)
         else:
-            self.config_path.touch(parents=True, exist_ok=True)
             self.yaml = {}
         self.apply_yaml()
         self.save_yaml()
