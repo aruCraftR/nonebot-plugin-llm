@@ -64,15 +64,14 @@ class LLMConfig:
             if value is None:
                 use_default = True
             else:
-                if types is None:
-                    pass
-                elif self.allow_default and value == DEFAULT:
+                is_default = self.allow_default and value == DEFAULT
+                if is_default or types is None:
                     pass
                 elif isinstance(types, tuple):
                     use_default = not is_one_of_instance(value, types)
                 else:
                     use_default = not isinstance(value, types)
-                if (not use_default) and condition is not None:
+                if (not (use_default or is_default)) and condition is not None:
                     if isinstance(condition, Filter):
                         if value != DEFAULT and isinstance(value, Iterable):
                             setattr(self, self.get_attr_name(key), type(value)(filter(condition.filter, value))) # type: ignore
