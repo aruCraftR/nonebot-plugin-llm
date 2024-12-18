@@ -18,7 +18,9 @@ def request_chat_completion(chat_instance: ChatInstance) -> tuple[str, bool]:
             presence_penalty=chat_instance.config.chat_presence_penalty,
             timeout=chat_instance.config.api_timeout,
         )
-        res = response['choices'][0]['message']['content'].strip() # type: ignore
+        res: str = response['choices'][0]['message']['content'].strip() # type: ignore
+        if res.startswith('['):
+            res = res.split(']', 1)[-1]
         return res, True
     except Exception as e:
         return f"请求API时发生错误: {repr(e)}", False
