@@ -28,8 +28,8 @@ cmd_clear_history = on_command(
 
 @cmd_clear_history.handle()
 async def clear_history(event: MessageEvent):
-    chat_key, is_group = get_chat_type(event)
-    if not (is_group or shared.plugin_config.reply_on_private):
+    chat_key, is_group = await get_chat_type(event)
+    if is_group is None or not (is_group or shared.plugin_config.reply_on_private):
         return
     history.clear_history(chat_key)
     await cmd_reload.finish(f'已清除当前会话的历史记录')
