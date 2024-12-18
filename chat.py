@@ -53,7 +53,7 @@ class ChatInstance:
         self.history.add_other_history(text, sender, auto_remove)
 
     def clear_history(self):
-        self.history = ChatHistory(self)
+        self.history = ChatHistory(self, False)
 
     def get_chat_messages(self) -> list[dict[str, str]]:
         return self.history.get_chat_messages()
@@ -71,7 +71,7 @@ class ChatInstance:
 
 class ChatHistory:
     data_keys = ('other_history', 'other_history_token_count', 'last_other_text', 'chat_history', 'chat_history_token_count', 'last_chat_text')
-    def __init__(self, instance: ChatInstance):
+    def __init__(self, instance: ChatInstance, load_pickle=True):
         self.instance = instance
         self.other_history: deque[tuple[float, dict, int]] = deque()
         self.other_history_token_count = 0
@@ -80,7 +80,8 @@ class ChatHistory:
         self.chat_history_token_count = 0
         self.last_chat_text = None
         self.pickle_path: Path = Path('data/llm', self.instance.chat_key, 'history.pickle')
-        self.load_pickle()
+        if load_pickle:
+            self.load_pickle()
 
     def get_data_dict(self):
         return {k: getattr(self, k) for k in self.data_keys}

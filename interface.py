@@ -21,7 +21,7 @@ def request_chat_completion(chat_instance: ChatInstance) -> tuple[str, bool]:
         res: str = response['choices'][0]['message']['content'].strip() # type: ignore
         if res.startswith('['):
             res = res.split(']', 1)[-1]
-        return res, True
+        return res.strip(), True
     except Exception as e:
         return f"请求API时发生错误: {repr(e)}", False
 
