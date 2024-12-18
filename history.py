@@ -80,3 +80,15 @@ def record_other_history(chat_key: str, text: str, sender: str, auto_remove=True
     if history is None:
         history = ChatHistory(chat_key)
     history.add_other_history(text, sender, auto_remove)
+
+
+def clear_history(chat_key: str):
+    history = history_data.get(chat_key)
+    if history is not None:
+        history = ChatHistory(chat_key)
+
+
+def reset_all_history():
+    count = len(history_data)
+    history_data.clear()
+    return count

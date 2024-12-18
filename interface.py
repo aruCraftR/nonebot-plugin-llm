@@ -20,6 +20,6 @@ def get_chat_response(messages: list[dict[str, str]])->Tuple[str, bool]:
         res = response['choices'][0]['message']['content'].strip() # type: ignore
         return res, True
     except Exception as e:
-        return f"请求 OpenAi Api 时发生错误: {repr(e)}", False
+        return f"请求API时发生错误: {repr(e)}", False
 
 

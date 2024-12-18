@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent, Bot, GroupMessageEvent, Pr
 
 from .interface import get_chat_response
 from .history import record_chat_history, record_other_history
-from .utils import uniform_chat_text, get_user_name
+from .utils import get_chat_type, uniform_chat_text, get_user_name
 from .rule import rule_forbidden_id, rule_forbidden_word, rule_available_message
 
 from . import shared
@@ -30,17 +30,8 @@ last_msg_time = 0
 async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
     global last_msg_time
     sender_name = await get_user_name(event=event, bot=bot, user_id=event.user_id) or '未知'
-    if isinstance(event, GroupMessageEvent):
-        chat_key = 'group_' + event.get_session_id().split("_")[1]
-        is_group = True
-    elif isinstance(event, PrivateMessageEvent):
-        if not shared.plugin_config.reply_on_private:
-            return
-        chat_key = 'private_' + event.get_user_id()
-        is_group = False
-    else:
-        if shared.plugin_config.debug:
-            shared.logger.info("未知消息来源: " + event.get_session_id())
+    chat_key, is_group = get_chat_type(event)
+    if not (is_group or shared.plugin_config.reply_on_private):
         return
 
     chat_text, wake_up = await uniform_chat_text(event=event, bot=bot)

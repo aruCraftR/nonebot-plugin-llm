@@ -1,7 +1,7 @@
 
 from typing import Union, Optional
 
-from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent, GroupIncreaseNoticeEvent, Bot
+from nonebot.adapters.onebot.v11 import MessageEvent, PrivateMessageEvent, GroupMessageEvent, GroupIncreaseNoticeEvent, Bot
 
 from . import shared
 
@@ -42,3 +42,15 @@ async def uniform_chat_text(event: MessageEvent, bot:Bot) -> tuple[str, bool]:
                         if user_name:
                             msg += f'@{user_name}' # 保持给bot看到的内容与真实用户看到的一致
         return msg, wake_up
+
+
+async def get_chat_type(event: MessageEvent) -> tuple[str, Optional[bool]]:
+    """生成聊天标识名称"""
+    if isinstance(event, GroupMessageEvent):
+        return f'group_{event.get_session_id().split("_")[1]}', True
+    elif isinstance(event, PrivateMessageEvent):
+        return f'private_{event.get_user_id()}', False
+    else:
+        if shared.plugin_config.debug:
+            shared.logger.info("未知消息来源: " + event.get_session_id())
+        return f'unknown_{event.get_session_id()}', None
