@@ -40,11 +40,11 @@ class LLMConfig:
             return f'{self.attr_prefix}{attr}'
 
     def load_yaml(self) -> None:
-        self.config_path.mkdir(parents=True, exist_ok=True)
         if self.config_path.is_file():
             with open(self.config_path, mode='r', encoding='utf-8') as f:
                 self.yaml = yaml.load(f, Loader=yaml.FullLoader)
         else:
+            self.config_path.touch(parents=True, exist_ok=True)
             self.yaml = {}
         self.apply_yaml()
         self.save_yaml()
