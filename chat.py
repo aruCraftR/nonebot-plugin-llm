@@ -20,18 +20,23 @@ from . import shared
 chat_instances: dict[str, 'ChatInstance'] = {}
 
 class ChatInstance:
-    async def __init__(self,bot: Bot, event: MessageEvent, chat_key: str, is_group: bool) -> None:
+    def __init__(self, chat_key: str, is_group: bool) -> None:
         self.name = None
         self.is_group = is_group
-        if isinstance(event, GroupMessageEvent):
-            self.name = (await bot.get_group_info(group_id=event.group_id))['group_name']
-        elif isinstance(event, PrivateMessageEvent):
-            self.name = await self.get_user_name(event, bot)
         self.last_msg_time: int | float = 0
         self.chat_key = chat_key
         self.config = InstanceConfig(chat_key)
         self.history = ChatHistory(self)
         chat_instances[self.chat_key] = self
+
+    @classmethod
+    async def async_init(cls, bot: Bot, event: MessageEvent, chat_key: str, is_group: bool):
+        self = cls(chat_key, is_group)
+        if isinstance(event, GroupMessageEvent):
+            self.name = (await bot.get_group_info(group_id=event.group_id))['group_name']
+        elif isinstance(event, PrivateMessageEvent):
+            self.name = await self.get_user_name(event, bot)
+        return self
 
     async def get_user_name(self, event: MessageEvent, bot: Bot):
         if self.is_group or self.name is None:
@@ -141,7 +146,7 @@ async def get_chat_instance(matcher: type[Matcher], event: MessageEvent, bot: Bo
     else:
         if is_group is None:
             await matcher.finish('未知的消息来源')
-        return await ChatInstance(bot, event, chat_key, is_group)
+        return await ChatInstance.async_init(bot, event, chat_key, is_group)
 
 
 def get_chat_instances():
