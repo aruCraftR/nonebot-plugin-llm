@@ -25,6 +25,7 @@ class Filter:
 
 
 class LLMConfig:
+    allow_default = False
     config_path: Path
     config_checkers: dict[str, tuple[Any, Any, Any]]
 
@@ -64,6 +65,8 @@ class LLMConfig:
                 use_default = True
             else:
                 if types is None:
+                    pass
+                elif self.allow_default and value == DEFAULT:
                     pass
                 elif isinstance(types, tuple):
                     use_default = not is_one_of_instance(value, types)
@@ -163,6 +166,7 @@ class PluginConfig(LLMConfig):
 
 
 class InstanceConfig(LLMConfig):
+    allow_default = True
     config_checkers = {
         'openai_api_v1': ((DEFAULT, str), None, DEFAULT),
         'model_identifier': ((DEFAULT, str), None, DEFAULT),
