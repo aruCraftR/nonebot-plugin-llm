@@ -81,7 +81,6 @@ class ChatHistory:
         sys_prompt = self.instance.config.system_prompt
         messages = [{"role": "system", "content": sys_prompt}] if sys_prompt else []
         histories = sorted(self.other_history + self.chat_history, key=lambda x: x[0])
-        messages.extend(i[2] for i in histories)
         if self.instance.config.provide_username or self.instance.config.provide_local_time:
             for i in histories:
                 msg = i[2]
