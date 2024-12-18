@@ -27,12 +27,12 @@ class PluginConfig:
         'model_identifier': (str, None, ''),
         'api_timeout': (int, lambda x: x > 0, 60),
         'reply_throttle_time': ((int, float), lambda x: x >= 0, 3),
+        'bot_name': (str, None, 'LLM'),
         'system_prompt': ((str, None), None, None),
         'chat_top_p': ((int, float), lambda x: 0 <= x <= 1, 0.95),
         'chat_temperature': ((int, float), lambda x: 0 <= x <= 1, 0.75),
         'chat_presence_penalty': ((int, float), lambda x: -2 <= x <= 2, 0.8),
         'chat_frequency_penalty': ((int, float), lambda x: -2 <= x <= 2, 0.8),
-        'bot_name': (str, None, 'LLM'),
         'reply_on_private': (bool, None, True),
         'reply_on_name_mention': (bool, None, True),
         'reply_on_at': (bool, None, True),
@@ -54,12 +54,12 @@ class PluginConfig:
     model_identifier: str
     api_timeout: int
     reply_throttle_time: int | float
+    bot_name: str
     system_prompt: str | None
     chat_top_p: int | float
     chat_temperature: int | float
     chat_presence_penalty: int | float
     chat_frequency_penalty: int | float
-    bot_name: str
     reply_on_private: bool
     reply_on_name_mention: bool
     reply_on_at: bool

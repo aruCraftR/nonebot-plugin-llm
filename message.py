@@ -30,8 +30,8 @@ last_msg_time = 0
 async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
     global last_msg_time
     sender_name = await get_user_name(event=event, bot=bot, user_id=event.user_id) or '未知'
-    chat_key, is_group = get_chat_type(event)
-    if not (is_group or shared.plugin_config.reply_on_private):
+    chat_key, is_group = await get_chat_type(event)
+    if is_group is None or not (is_group or shared.plugin_config.reply_on_private):
         return
 
     chat_text, wake_up = await uniform_chat_text(event=event, bot=bot)
