@@ -87,7 +87,7 @@ class ChatHistory:
                 if msg['role'] == 'user':
                     extra = ''
                     if self.instance.config.provide_local_time:
-                        extra = f'[{i[3]}] '
+                        extra = f'[时间: {i[1]}] '
                     if self.instance.config.provide_username:
                         extra = f'{extra}{msg['name']}说 '
                     msg['content'] = f'{extra}{msg['content']}'
