@@ -2,11 +2,11 @@
 from time import time
 from nonebot.plugin import on_message, on_notice
 from nonebot.matcher import Matcher
-from nonebot.adapters.onebot.v11 import MessageEvent, Bot, GroupMessageEvent, PrivateMessageEvent, GroupIncreaseNoticeEvent
+from nonebot.adapters.onebot.v11 import MessageEvent, Bot, GroupIncreaseNoticeEvent
 
-from .interface import get_chat_response
-from .history import record_chat_history, record_other_history
-from .utils import get_chat_type, uniform_chat_text, get_user_name
+from .chat import get_chat_instance
+from .interface import request_chat_completion
+from .utils import uniform_chat_text, get_user_name
 from .rule import rule_forbidden_id, rule_forbidden_word, rule_available_message
 
 from . import shared
@@ -23,30 +23,27 @@ notice = on_notice(
     block=False
 )
 
-last_msg_time = 0
-
 
 @message.handle()
-async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
-    global last_msg_time
-    sender_name = await get_user_name(event=event, bot=bot, user_id=event.user_id) or '未知'
-    chat_key, is_group = await get_chat_type(event)
-    if is_group is None or not (is_group or shared.plugin_config.reply_on_private):
+async def message_handler(event: MessageEvent, bot: Bot):
+    chat_instance = await get_chat_instance(message, event, bot)
+    if not chat_instance.enabled:
         return
 
+    sender_name = await chat_instance.get_user_name(event, bot)
     chat_text, wake_up = await uniform_chat_text(event=event, bot=bot)
 
     if not ((
-            shared.plugin_config.reply_on_name_mention
+            chat_instance.config.reply_on_name_mention
             and
-            shared.plugin_config.bot_name in chat_text.lower()
+            chat_instance.config.bot_name in chat_text.lower()
         ) or (
-            shared.plugin_config.reply_on_at
+            chat_instance.config.reply_on_at
             and
             (wake_up or event.is_tome())
         )):
-        if is_group:
-            record_other_history(chat_key, chat_text, sender_name)
+        if chat_instance.is_group and chat_instance.config.record_other_context:
+            chat_instance.record_other_history(chat_text, sender_name)
         if shared.plugin_config.debug:
             shared.logger.info(f'{sender_name} 的消息 {chat_text} 不满足生成条件, 已跳过')
             shared.logger.info(
@@ -57,19 +54,19 @@ async def message_handler(matcher: Matcher, event: MessageEvent, bot: Bot):
             )
         return
 
+    chat_instance.record_chat_history(chat_text, sender_name)
+
+    msg_time = time()
+    if msg_time - chat_instance.last_msg_time < chat_instance.config.reply_throttle_time:
+        return
+    chat_instance.last_msg_time = msg_time
+
     if shared.plugin_config.debug:
         shared.logger.info(f'正在准备为 {sender_name} 生成消息')
 
-    history = record_chat_history(chat_key, chat_text, sender_name)
-
-    msg_time = time()
-    if msg_time - last_msg_time < shared.plugin_config.reply_throttle_time:
-        return
-    last_msg_time = msg_time
-
-    response, success = get_chat_response(history.get_chat_messages(shared.plugin_config.system_prompt))
+    response, success = request_chat_completion(chat_instance)
     if success:
-        record_chat_history(chat_key, response)
+        chat_instance.record_chat_history(response)
     await message.finish(response)
 
 

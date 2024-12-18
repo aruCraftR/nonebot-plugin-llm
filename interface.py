@@ -1,21 +1,22 @@
-from typing import Tuple
 
 import openai
 
-from . import shared
+from .chat import ChatInstance
 
-def get_chat_response(messages: list[dict[str, str]])->Tuple[str, bool]:
+def request_chat_completion(chat_instance: ChatInstance) -> tuple[str, bool]:
     """对话文本生成"""
+    openai.api_base = chat_instance.config.openai_api_v1
+    openai.api_key = 'none'
     try:
         response = openai.ChatCompletion.create(
-            model=shared.plugin_config.model_identifier,
-            messages=messages,
-            temperature=shared.plugin_config.chat_temperature,
+            model=chat_instance.config.model_identifier,
+            messages=chat_instance.get_chat_messages(),
+            temperature=chat_instance.config.chat_temperature,
             # max_tokens=self.config['max_tokens'],
-            top_p=shared.plugin_config.chat_top_p,
-            frequency_penalty=shared.plugin_config.chat_frequency_penalty,
-            presence_penalty=shared.plugin_config.chat_presence_penalty,
-            timeout=shared.plugin_config.api_timeout,
+            top_p=chat_instance.config.chat_top_p,
+            frequency_penalty=chat_instance.config.chat_frequency_penalty,
+            presence_penalty=chat_instance.config.chat_presence_penalty,
+            timeout=chat_instance.config.api_timeout,
         )
         res = response['choices'][0]['message']['content'].strip() # type: ignore
         return res, True

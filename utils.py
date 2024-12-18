@@ -47,10 +47,11 @@ async def uniform_chat_text(event: MessageEvent, bot:Bot) -> tuple[str, bool]:
 async def get_chat_type(event: MessageEvent) -> tuple[str, Optional[bool]]:
     """生成聊天标识名称"""
     if isinstance(event, GroupMessageEvent):
-        return f'group_{event.get_session_id().split("_")[1]}', True
+        return f'group_{event.group_id}', True
     elif isinstance(event, PrivateMessageEvent):
         return f'private_{event.get_user_id()}', False
     else:
         if shared.plugin_config.debug:
             shared.logger.info("未知消息来源: " + event.get_session_id())
         return f'unknown_{event.get_session_id()}', None
+
