@@ -76,3 +76,19 @@ async def discard_bot_name(event: MessageEvent, bot: Bot):
     chat_instance = await get_chat_instance(cmd_change_bot, event, bot)
     chat_instance.config.set_value('bot_name', DEFAULT)
     await cmd_discard_bot.finish(f'已切换到默认系统提示词预设 {chat_instance.config.bot_name}\n提示词内容: {chat_instance.config.system_prompt}')
+
+
+cmd_info_history = on_command(
+    ('llm', 'info', 'history'),
+    permission=SUPERUSER
+)
+
+@cmd_info_history.handle()
+async def info_history(event: MessageEvent, bot: Bot):
+    chat_instance = await get_chat_instance(cmd_change_bot, event, bot)
+    await cmd_info_history.finish(
+        f'对话条数: {len(chat_instance.history.chat_history)}\n'
+        f'对话Token数: {chat_instance.history.chat_history_token_count}\n'
+        f'上下文条数: {len(chat_instance.history.other_history)}\n'
+        f'上下文Token数: {chat_instance.history.other_history_token_count}\n'
+    )

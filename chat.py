@@ -1,5 +1,7 @@
 
 from collections import deque
+from pathlib import Path
+import pickle
 from typing import Optional
 from time import asctime, time, localtime
 
@@ -68,6 +70,7 @@ class ChatInstance:
 #-----------------------------
 
 class ChatHistory:
+    data_keys = ('other_history', 'other_history_token_count', 'last_other_text', 'chat_history', 'chat_history_token_count', 'last_chat_text')
     def __init__(self, instance: ChatInstance):
         self.instance = instance
         self.other_history: deque[tuple[float, dict, int]] = deque()
@@ -76,6 +79,25 @@ class ChatHistory:
         self.chat_history: deque[tuple[float, dict, int]] = deque()
         self.chat_history_token_count = 0
         self.last_chat_text = None
+        self.pickle_path: Path = Path('data/llm', self.instance.chat_key, 'history.pickle')
+        self.load_pickle()
+
+    def get_data_dict(self):
+        return {k: getattr(self, k) for k in self.data_keys}
+
+    def save_pickle(self):
+        with self.pickle_path.open('wb') as f:
+            pickle.dump(self.get_data_dict(), f)
+
+    def load_pickle(self):
+        if not self.pickle_path.is_file():
+            return
+        with self.pickle_path.open('rb') as f:
+            pickle_data: dict = pickle.load(f)
+        for k in self.data_keys:
+            value = pickle_data.get(k)
+            if value is not None:
+                setattr(self, k, value)
 
     def get_chat_messages(self) -> list[dict[str, str]]:
         sys_prompt = self.instance.config.system_prompt
