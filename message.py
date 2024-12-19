@@ -30,7 +30,7 @@ async def message_handler(event: MessageEvent, bot: Bot):
         return
 
     sender_name = await chat_instance.get_user_name(event, bot)
-    chat_text, wake_up = await uniform_chat_text(event=event, bot=bot)
+    chat_text, wake_up = await uniform_chat_text(event, bot)
 
     if not ((
             chat_instance.config.reply_on_name_mention

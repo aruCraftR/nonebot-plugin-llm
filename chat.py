@@ -124,7 +124,7 @@ class ChatHistory:
             token_count = self.other_history.pop()[-1]
         else:
             self.last_other_text = text
-            text = self.add_extra_info(text)
+            text = self.add_extra_info(text, sender)
             token_count = self.count_token(text)
             self.other_history_token_count += token_count
         self.other_history.append((time(), self.gen_text_json(text, sender), token_count))
@@ -138,7 +138,7 @@ class ChatHistory:
             token_count = self.chat_history.pop()[-1]
         else:
             self.last_chat_text = text
-            text = self.add_extra_info(text)
+            text = self.add_extra_info(text, sender)
             token_count = self.count_token(text)
             self.chat_history_token_count += token_count
         self.chat_history.append((time(), self.gen_text_json(text, sender), token_count))
