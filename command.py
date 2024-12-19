@@ -7,6 +7,29 @@ from nonebot.params import CommandArg
 from .config import DEFAULT
 from .chat import get_chat_instance, get_chat_instances
 from . import shared
+from .rule import rule_forbidden_id
+
+
+HELP_MSG = \
+"""LLM插件命令列表(标有*的为管理员命令)
+.llm help | *获取帮助信息
+.llm reload | *重载全部配置文件
+.llm reset history | *重置全部会话记录
+.llm info history | *查看当前会话的记录情况
+.llm change bot <bot_name> | *更改当前会话的机器人预设为<bot_name>
+.llm discard bot <bot_name> | *将当前会话的机器人预设恢复为默认
+
+.llm new | 重置当前会话记录"""
+
+cmd_help = on_command(
+    ('llm', 'help'),
+    permission=SUPERUSER
+)
+
+@cmd_help.handle()
+async def print_help():
+    await cmd_help.finish(HELP_MSG)
+
 
 cmd_reload = on_command(
     ('llm', 'reload'),
@@ -26,7 +49,8 @@ async def reload_config():
 
 
 cmd_clear_history = on_command(
-    ('llm', 'new')
+    ('llm', 'new'),
+    rule=rule_forbidden_id
 )
 
 @cmd_clear_history.handle()
@@ -88,7 +112,7 @@ async def info_history(event: MessageEvent, bot: Bot):
     chat_instance = await get_chat_instance(cmd_change_bot, event, bot)
     await cmd_info_history.finish(
         f'对话条数: {len(chat_instance.history.chat_history)}\n'
-        f'对话Token数: {chat_instance.history.chat_history_token_count} / {chat_instance.config.record_chat_context_token_limit}\n'
+        f'对话Token数: {chat_instance.history.chat_history_token_count} / {chat_instance.history.chat_context_token_limit}\n'
         f'上下文条数: {len(chat_instance.history.other_history)}\n'
-        f'上下文Token数: {chat_instance.history.other_history_token_count} / {chat_instance.config.record_other_context_token_limit}'
+        f'上下文Token数: {chat_instance.history.other_history_token_count} / {chat_instance.history.other_context_token_limit}'
     )

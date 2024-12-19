@@ -1,16 +1,18 @@
 
+from typing import Optional
 import openai
 
 from .chat import ChatInstance
 
-def request_chat_completion(chat_instance: ChatInstance) -> tuple[str, bool]:
+
+async def request_chat_completion(chat_instance: ChatInstance, _override: Optional[list[dict[str, str]]] = None) -> tuple[str, bool]:
     """对话文本生成"""
     openai.api_base = chat_instance.config.openai_api_v1
     openai.api_key = 'none'
     try:
         response = openai.ChatCompletion.create(
             model=chat_instance.config.model_identifier,
-            messages=chat_instance.get_chat_messages(),
+            messages=chat_instance.get_chat_messages(_override),
             temperature=chat_instance.config.chat_temperature,
             # max_tokens=self.config['max_tokens'],
             top_p=chat_instance.config.chat_top_p,

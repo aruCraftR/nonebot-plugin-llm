@@ -1,22 +1,12 @@
 from collections.abc import Iterable
 from pathlib import Path
 import os
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 import yaml
 
 from . import shared
 
 DEFAULT = 'default'
-
-
-def is_one_of_instance(x, types: tuple):
-    for t in types:
-        if isinstance(t, str):
-            if x == t:
-                return True
-        elif x is t or isinstance(x, t):
-            return True
-    return False
 
 
 class Filter:
@@ -25,12 +15,12 @@ class Filter:
 
 
 class LLMConfig:
+    attr_prefix = None
     allow_default = False
     config_path: Path
-    config_checkers: dict[str, tuple[Any, Any, Any]]
+    config_checkers: 'dict[str, tuple[Union[tuple, type], Optional[Union[Callable, Filter]], Any]]'
 
-    def __init__(self, attr_prefix=None) -> None:
-        self.attr_prefix = attr_prefix
+    def __init__(self) -> None:
         self.yaml: dict = None # type: ignore
         self.load_yaml()
 
@@ -65,11 +55,7 @@ class LLMConfig:
                 use_default = True
             else:
                 is_default = self.allow_default and value == DEFAULT
-                if is_default or types is None:
-                    pass
-                elif isinstance(types, tuple):
-                    use_default = not is_one_of_instance(value, types)
-                else:
+                if not (is_default or types is None):
                     use_default = not isinstance(value, types)
                 if (not (use_default or is_default)) and condition is not None:
                     if isinstance(condition, Filter):
@@ -83,7 +69,7 @@ class LLMConfig:
             else:
                 setattr(self, self.get_attr_name(key), value)
 
-    def set_value(self, key: str, value: Any, save=True):
+    def set_value(self, key: str, value: Any, *, save=True):
         setattr(self, self.get_attr_name(key), value)
         if save:
             self.save_yaml()
@@ -105,7 +91,7 @@ class PluginConfig(LLMConfig):
         'reply_on_private': (bool, None, True),
         'reply_on_name_mention': (bool, None, True),
         'reply_on_at': (bool, None, True),
-        'reply_on_welcome': (bool, None, True),
+        'reply_on_welcome': (bool, None, False),
         'use_group_card': (bool, None, True),
         'record_other_context': (bool, None, True),
         'record_other_context_token_limit': (int, lambda x: x > 0, 2048),
@@ -149,22 +135,20 @@ class PluginConfig(LLMConfig):
     block_event: bool
     debug: bool
 
-    def __init__(self) -> None:
-        super().__init__(None)
-
     def apply_yaml(self) -> None:
         super().apply_yaml()
         if self.bot_name not in self.system_prompts:
             shared.logger.warning(f'全局预设名 {self.bot_name} 未在system_prompts中定义')
             if self.system_prompts:
                 bot_name = next(iter(self.system_prompts.keys()))
-                self.set_value('bot_name', bot_name)
+                self.set_value('bot_name', bot_name, save=False)
                 shared.logger.warning(f'已自动更改为 {bot_name}')
             else:
-                self.set_value('bot_name', self.config_checkers['bot_name'][-1])
+                self.set_value('bot_name', self.config_checkers['bot_name'][-1], save=False)
 
 
 class InstanceConfig(LLMConfig):
+    attr_prefix = '_'
     allow_default = True
     config_checkers = {
         'openai_api_v1': ((DEFAULT, str), None, DEFAULT),
@@ -180,7 +164,6 @@ class InstanceConfig(LLMConfig):
         'reply_on_name_mention': ((DEFAULT, bool), None, DEFAULT),
         'reply_on_at': ((DEFAULT, bool), None, DEFAULT),
         'reply_on_welcome': ((DEFAULT, bool), None, DEFAULT),
-        'use_group_card': ((DEFAULT, bool), None, DEFAULT),
         'record_other_context': ((DEFAULT, bool), None, DEFAULT),
         'record_other_context_token_limit': ((DEFAULT, int), lambda x: x > 0, DEFAULT),
         'record_chat_context': ((DEFAULT, bool), None, DEFAULT),
@@ -246,10 +229,6 @@ class InstanceConfig(LLMConfig):
         return self.get_value('reply_on_welcome')
 
     @property
-    def use_group_card(self) -> bool:
-        return self.get_value('use_group_card')
-
-    @property
     def record_other_context(self) -> bool:
         return self.get_value('record_other_context')
 
@@ -283,13 +262,12 @@ class InstanceConfig(LLMConfig):
 
     def __init__(self, chat_key: str) -> None:
         self.chat_key = chat_key
-        super().__init__('_')
 
     def apply_yaml(self) -> None:
         super().apply_yaml()
         if self.system_prompt is None:
             shared.logger.warning(f'{self.chat_key}配置中的预设名 {self.bot_name} 未在system_prompts中定义, 已自动回退为默认值')
-            self.set_value('bot_name', DEFAULT)
+            self.set_value('bot_name', DEFAULT, save=False)
 
 
 shared.plugin_config = PluginConfig()

@@ -2,8 +2,9 @@
 from collections import deque
 from pathlib import Path
 import pickle
+from itertools import chain
 from typing import Optional
-from time import asctime, time, localtime
+from time import asctime, time
 
 from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import MessageEvent, PrivateMessageEvent, GroupMessageEvent, Bot
@@ -55,8 +56,8 @@ class ChatInstance:
     def clear_history(self):
         self.history = ChatHistory(self, False)
 
-    def get_chat_messages(self) -> list[dict[str, str]]:
-        return self.history.get_chat_messages()
+    def get_chat_messages(self, _override: Optional[list[dict[str, str]]] = None) -> list[dict[str, str]]:
+        return self.history.get_chat_messages(_override)
 
     @property
     def enabled(self):
@@ -83,6 +84,14 @@ class ChatHistory:
         if load_pickle:
             self.load_pickle()
 
+    @property
+    def other_context_token_limit(self) -> int:
+        return self.instance.config.record_other_context_token_limit if self.instance.is_group else 0
+
+    @property
+    def chat_context_token_limit(self) -> int:
+        return self.instance.config.record_chat_context_token_limit if self.instance.is_group else self.instance.config.record_chat_context_token_limit + self.instance.config.record_other_context_token_limit
+
     def get_data_dict(self):
         return {k: getattr(self, k) for k in self.data_keys}
 
@@ -100,11 +109,14 @@ class ChatHistory:
             if value is not None:
                 setattr(self, k, value)
 
-    def get_chat_messages(self) -> list[dict[str, str]]:
+    def get_chat_messages(self, _override: Optional[list[dict[str, str]]] = None) -> list[dict[str, str]]:
         sys_prompt = self.instance.config.system_prompt
         messages = [{"role": "system", "content": sys_prompt}] if sys_prompt else []
-        histories = sorted(self.other_history + self.chat_history, key=lambda x: x[0])
-        messages.extend(i[1] for i in histories)
+        if _override is None:
+            histories = sorted(chain(self.other_history, self.chat_history), key=lambda x: x[0])
+            messages.extend(i[1] for i in histories)
+        else:
+            messages.extend(_override)
         return messages
 
     def add_other_history(self, text: str, sender: str, auto_remove=True):
@@ -118,7 +130,7 @@ class ChatHistory:
         self.other_history.append((time(), self.gen_text_json(text, sender), token_count))
         if not auto_remove:
             return
-        while len(self.other_history) > 0 and self.other_history_token_count > self.instance.config.record_other_context_token_limit:
+        while len(self.other_history) > 0 and self.other_history_token_count > self.other_context_token_limit:
             self.other_history_token_count -= self.other_history.popleft()[-1]
 
     def add_chat_history(self, text: str, sender: Optional[str] = None, auto_remove=True):
@@ -132,7 +144,7 @@ class ChatHistory:
         self.chat_history.append((time(), self.gen_text_json(text, sender), token_count))
         if not auto_remove:
             return
-        while len(self.chat_history) > 0 and self.chat_history_token_count > self.instance.config.record_chat_context_token_limit:
+        while len(self.chat_history) > 0 and self.chat_history_token_count > self.chat_context_token_limit:
             self.chat_history_token_count -= self.chat_history.popleft()[-1]
 
     def add_extra_info(self, text: str, sender: Optional[str] = None):
@@ -158,7 +170,7 @@ class ChatHistory:
         return len(shared.tiktoken.encode(text))
 
 
-async def get_chat_instance(matcher: type[Matcher], event: MessageEvent, bot: Bot):
+async def get_chat_instance(matcher: type[Matcher], event: MessageEvent, bot: Bot) -> ChatInstance:
     chat_key, is_group = await get_chat_type(event)
     if chat_key in chat_instances:
         return chat_instances[chat_key]
@@ -166,6 +178,10 @@ async def get_chat_instance(matcher: type[Matcher], event: MessageEvent, bot: Bo
         if is_group is None:
             await matcher.finish('未知的消息来源')
         return await ChatInstance.async_init(bot, event, chat_key, is_group)
+
+
+def get_chat_instance_directly(chat_key) -> Optional[ChatInstance]:
+    return chat_instances.get(chat_key)
 
 
 def get_chat_instances():

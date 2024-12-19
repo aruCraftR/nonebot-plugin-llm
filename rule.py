@@ -1,6 +1,5 @@
 
-from nonebot.adapters import Event
-from nonebot.adapters.onebot.v11 import GroupMessageEvent
+from nonebot.adapters.onebot.v11 import GroupMessageEvent, Event
 from nonebot.rule import Rule
 
 from . import shared
@@ -31,7 +30,7 @@ async def available_message(event: Event) -> bool:
     if not plaintext:
         return False
     for i in shared.nonebot_config.command_start:
-        if i and plaintext.strip().startswith(i):
+        if i and plaintext.lstrip().startswith(i):
             return False
     return True
 
