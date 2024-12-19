@@ -261,8 +261,8 @@ class InstanceConfig(LLMConfig):
         return shared.plugin_config.system_prompts.get(self.bot_name)
 
     def __init__(self, chat_key: str) -> None:
-        super().__init__()
         self.chat_key = chat_key
+        super().__init__()
 
     def apply_yaml(self) -> None:
         super().apply_yaml()
