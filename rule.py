@@ -28,6 +28,8 @@ async def forbidden_word(event: Event) -> bool:
 async def available_message(event: Event) -> bool:
     plaintext = event.get_plaintext()
     if not plaintext:
+        if shared.plugin_config.debug:
+            shared.logger.info(f'跳过空消息')
         return False
     for i in shared.nonebot_config.command_start:
         if i and plaintext.lstrip().startswith(i):
